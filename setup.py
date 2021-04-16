@@ -8,4 +8,4 @@ setup(name='hdps',
       author_email='Vivek.Kailasam@ingef.de',
       license='',
       packages=['hpds'],
-      zip_safe=False, install_requires=['pandas', 'numpy'])
+      zip_safe=False, install_requires=['pandas', 'numpy', 'epydemiology'])
