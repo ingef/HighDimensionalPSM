@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 import logging
 
+logger = logging.getLogger()
+logger.setLevel('INFO')
 
 def get_non_code_cols(col_names, Dimension_prefixes):
     """function that gives the name of the columns in the input df which
@@ -87,7 +89,30 @@ def step_assess_recurrence(input_df, selected_columns):
     return dim_covariates
 
 
-def step_prioritize_select_covariates(dim_covariates, input_df, treatment, outcome, k, not_code_columns):
+def step_prioritize_select_covariates(dim_covariates, input_df, treatment, outcome, k, not_code_columns, threshold='75p', outcome_cont=False):
+    # possible values for threshold are '75p', 'median', integer or float value given by the user
+    # possible values for outcome_cont are True for Continous outcome or False for Binary outcome
+
+    #log_info()
+
+
+    if outcome_cont == True:
+       if threshold == '75p':
+           threshold_value = np.percentile(input_df[outcome],75)
+           logging.info('Threshold is 75 percentile: ',threshold_value)
+       elif threshold == 'median':
+           threshold_value = np.median(input_df[outcome])
+           logging.info('Threshold is median: ',threshold_value)
+       elif isinstance(threshold,(int,float)):
+           threshold_value = threshold
+           logging.info('Threshold is a value given: ',threshold_value)
+       else:
+           logging.error("Invalid value given for 'threshold' parameter")
+           raise Exception("Invalid value given for 'threshold' parameter")
+       #converting continous outcome column to binary
+       input_df[outcome] = np.where(input_df[outcome] > threshold_value, 1, 0)
+
+
     # list of covariates' names (columns)
     covariates_list = dim_covariates.columns
 
@@ -136,8 +161,8 @@ def step_prioritize_select_covariates(dim_covariates, input_df, treatment, outco
     # output df
     output_df = pd.concat([input_df[not_code_columns], dim_covariates_sel], axis=1)
 
-    print('List of selected HDPS covarities (with higher to lower values of absolute log BiasMult): ',
-          sel_covariate_names)
+    logging.info('List of selected HDPS covarities (with higher to lower values of absolute log BiasMult): ' +
+          str(sel_covariate_names))
 
     return output_df, rank_df
 
