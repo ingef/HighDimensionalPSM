@@ -86,8 +86,9 @@ def step_identify_candidate_empirical_covariates(input_df: pd.DataFrame, dimensi
 
         # Further Selection - Among the selected coded - top n codes where selected
         if dim_prevalance.shape[0] > n:
-            dim_prevalance_sel = dim_prevalance[:n]
-            selected_columns.extend(dim_prevalance_sel[dim_name])
+            dim_prevalance = dim_prevalance[:n]
+
+        selected_columns.extend(dim_prevalance[dim_name])
 
     return selected_columns
 
