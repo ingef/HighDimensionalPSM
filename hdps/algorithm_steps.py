@@ -167,7 +167,8 @@ def step_prioritize_select_covariates(dim_covariates: pd.DataFrame, input_df: pd
     :param k: int
         number of final HDPS_covariates required. top k covariates are finally selected (considering all dimensions)
 
-    :param not_code_columns:
+    :param not_code_columns: list - list of strings
+        list of names of columns without dimension names as prefixes
 
     :param threshold: Union[str, float]
         applicable only if outcome_cont == True.
@@ -226,12 +227,21 @@ def step_prioritize_select_covariates(dim_covariates: pd.DataFrame, input_df: pd
         # creating the contigency table between treatment and a particular covariate in the selected covariates
         cont_tab = pd.crosstab(dim_covariates_treat_outcome[covariate], dim_covariates_treat_outcome[treatment])
 
+        if cont_tab.shape != (2,2):
+            logging.error("Dimension of 'cont_tab' is not  (2,2). Problem with " + str(covariate))
+            raise Exception("Dimension of 'cont_tab' is not (2,2). Problem with " + str(covariate))
+
         # calculating PC0 and PC1
         P_c0 = cont_tab.loc[1, 0] / cont_tab[0].sum()  # for treatment 0
         p_c1 = cont_tab.loc[1, 1] / cont_tab[1].sum()  # for treatment 1
 
         # Calculating RRcd
         cont_tab_co = pd.crosstab(dim_covariates_treat_outcome[covariate], dim_covariates_treat_outcome[outcome])
+
+        if cont_tab_co.shape != (2, 2):
+            logging.error("Dimension of 'cont_tab_co' is not  (2,2). Problem with " + str(covariate))
+            raise Exception("Dimension of 'cont_tab_co' is not  (2,2). Problem with " + str(covariate))
+
         RRcd = (cont_tab_co.loc[1, 1]/cont_tab_co.loc[1, :].sum()) / (cont_tab_co.loc[0, 1]/cont_tab_co.loc[0, :].sum())
 
         # calculating absolute value of log of BiasMult
@@ -256,7 +266,7 @@ def step_prioritize_select_covariates(dim_covariates: pd.DataFrame, input_df: pd
 
     # df with selected covariates, abs_log_BiasMult and rank
     rank_df = Cov_BiasMult_df[['Covariates Name', 'abs_log_BiasMult']]
-    rank_df['Rank'] = np.arange(1, (k + 1))
+    rank_df['Rank'] = np.arange(1, (rank_df.shape[0] + 1))
 
     # filtering those k columns
     dim_covariates_sel = dim_covariates_treat_outcome[sel_covariate_names]
@@ -269,6 +279,134 @@ def step_prioritize_select_covariates(dim_covariates: pd.DataFrame, input_df: pd
 
     return output_df, rank_df
 
+
+def input_data_validation(input_df: pd.DataFrame, treatment: str, outcome: str, not_code_columns: list,
+                          threshold: Union[str, float] = '75p', outcome_cont: bool = False):
+    """
+    performs validation of input_df columns. Removes invalid code columns.
+
+    :param input_df: pandas.DataFrame
+        Data frame with mandatory columns - 'PID', outcome, treatment, codes (like ICD, OPS) with corresponding dimension name as prefix - examples: 'DimensionName1_ICDcodeName1', 'DimensionName1_ICDcodeName2', 'DimensionName1_ICDcodeName1', 'DimensionName2_OPScodeName1', 'DimensionName2_OPScodeName1' and
+        other optional columns of predefined and demographic columns
+
+    :param treatment: str
+        name of the column which have treatment(exposure) values. This column has to be a binary column
+
+    :param outcome: str
+        name of the column which have outcome values
+
+    :param threshold: Union[str, float]
+        applicable only if outcome_cont == True.
+        a cut-off threshold to make a continous outcome to binary outcome.
+        possible values for threshold are '75p', 'median', integer or float value given by the user.
+        if '75p', 75th percentile value of the outcome column is taken as cut-off threshold
+        if 'median', median value of the outcome column is taken as cut-off threshold
+        if integer or float value, the given value is taken as cut-off threshold
+
+    :param not_code_columns: list - list of strings
+        list of names of columns without dimension names as prefixes
+
+    :param outcome_cont: bool
+        True if outcome is continous and False if outcome is binary. Default value: False
+        The HDPS implemention proposed in [1] is for binary outcome. in order to adapt the HDPS implemention for continous outcome too, below procedure is followed.
+
+        When outcome D is Binary as per [1].
+        RRcd = P(D =1 | C=1) / P(D=1|C = 0)
+
+        Adaptation when outcome D is continuous.
+        	Set threshold t which is 75th percentile value for the outcome column (but it could be set to median or any float or integer value if the user wishes to do so)
+        	Calculate RRcd = P(D>t|C=1) / P(D>t|C=0).
+        This is done by making a continuous outcome column to binary column, if value of outcome> t, then 1 else 0. After converting to binary, RRcd = P(D>t|C=1) / P(D>t|C=0) is equivalent to RRcd = P(D =1 | C=1) / P(D=1|C = 0)
+
+    :return: input_df: pandas.DataFrame
+        Data frame with mandatory columns - 'PID', outcome, treatment, codes (like ICD, OPS) with corresponding dimension name as prefix - examples: 'DimensionName1_ICDcodeName1', 'DimensionName1_ICDcodeName2', 'DimensionName1_ICDcodeName1', 'DimensionName2_OPScodeName1', 'DimensionName2_OPScodeName1' and
+        other optional columns of predefined and demographic columns. This is an updated input_df where invalid code columns are removed.
+
+    References:
+    [1] Schneeweiss, Sebastian & Rassen, Jeremy & Glynn, Robert & Avorn, Jerry & Mogun, Helen & Brookhart, M. (2009). High-Dimensional Propensity Score Adjustment in Studies of Treatment Effects Using Health Care Claims Data. Epidemiology (Cambridge, Mass.). 20. 512-22. 10.1097/EDE.0b013e3181a663cc.
+    [2] Sam Lendle, "lendle/hdps: High-dimensional propensity score algorithm". link: https://rdrr.io/github/lendle/hdps/
+    [3] ohn Tazare & Ian Douglas & Elizabeth Williamson, 2019. "hdps: Implementation of high-dimensional propensity score approaches in Stata," London Stata Conference 2019 05, Stata Users Group. Link: https://www.stata.com/meeting/uk19/slides/uk19_tazare.pdf
+    [4] Schneeweiss S. Automated data-adaptive analytics for electronic healthcare data to study causal treatment effects. Clin Epidemiol. 2018;10:771-788. Published 2018 Jul 6. doi:10.2147/CLEP.S166545
+    [5] Wyss R, Fireman B, Rassen JA, Schneeweiss S. Erratum: High-dimensional Propensity Score Adjustment in Studies of Treatment Effects Using Health Care Claims Data. Epidemiology. 2018 Nov;29(6):e63-e64. doi: 10.1097/EDE.0000000000000886. Erratum for: Epidemiology. 2009 Jul;20(4):512-22. PMID: 29958191.
+    """
+
+    outcome_col = input_df[outcome]
+
+    treatment_col = input_df[treatment]
+
+    code_column_df = input_df.drop(columns=not_code_columns)
+
+    # code_column_names = code_column_df.columns
+    treat_unqiue_val = treatment_col.unique()
+
+    if treat_unqiue_val.shape[0] != 2:
+        logging.error(treatment + " column is invalid. Treatment column is expected to have both 0 and 1 values and "
+                                  "and also expected to not have other values except 0 and 1")
+        raise Exception(treatment + " column is invalid. Treatment column is expected to have both 0 and 1 values and "
+                                    "and also expected to not have other values except 0 and 1")
+    else:
+        treat_unqiue_val.sort()
+        if not (treat_unqiue_val[0] == 0 and treat_unqiue_val[1] == 1):
+            logging.error(
+                treatment + " column is invalid. Treatment column is expected to have both 0 and 1 values and "
+                            "and also expected to not have other values except 0 and 1")
+            raise Exception(
+                treatment + " column is invalid. Treatment column is expected to have both 0 and 1 values and "
+                            "and also expected to not have other values except 0 and 1")
+
+    if outcome_cont:
+        if threshold == '75p':
+            threshold_value = np.percentile(input_df[outcome], 75)
+        elif threshold == 'median':
+            threshold_value = np.median(input_df[outcome])
+        elif isinstance(threshold, (int, float)):
+            threshold_value = threshold
+        else:
+            raise Exception("Invalid value given for 'threshold' parameter")
+        # converting continous outcome column to binary
+        outcome_col = np.where(input_df[outcome] > threshold_value, 1, 0)
+    else:
+        outcome_col = input_df[outcome]
+
+    out_unqiue_val = outcome_col.unique()
+
+    if out_unqiue_val.shape[0] != 2:
+        logging.error(outcome + " column is invalid. Binary outcome column or converted binary column (if outcome is "
+                                "continuous) is expected to have both 0 and 1 values and also expected to not have "
+                                "other values except 0 and 1")
+        raise Exception(outcome + " column is invalid. Binary outcome column or converted binary column (if outcome is "
+                                  "continuous) is expected to have both 0 and 1 values and also expected to not have "
+                                  "other values except 0 and 1")
+
+    else:
+        out_unqiue_val.sort()
+        if not (out_unqiue_val[0] == 0 and out_unqiue_val[1] == 1):
+            logging.error(
+                outcome + " column is invalid. Binary outcome column or converted binary column (if outcome is "
+                          "continuous) is expected to have both 0 and 1 values and and also expected to not have "
+                          "other values except 0 and 1")
+            raise Exception(
+                outcome + " column is invalid. Binary outcome column or converted binary column (if outcome is "
+                          "continuous) is expected to have both 0 and 1 values and not and also expected to not have "
+                          "other values except 0 and 1")
+
+    invalid_code_columns = []
+
+    for col in code_column_df.columns:
+        code_unique_value = code_column_df[col].unique()
+
+        # check for zero entry presence and atleast one non-zero entry presence
+        if (code_unique_value.all()) or (not code_unique_value.any()):
+            invalid_code_columns.append(col)
+
+    if len(invalid_code_columns) > 0:
+        logging.warning("Some code column(s) is/are invalid. The invalid code columns are ignored. The code column is "
+                        "expected to have at least one zero value and 1 non-zero value")
+        logging.warning("List of ignored invalid code columns: " + str(invalid_code_columns))
+
+        input_df = input_df.drop(columns=invalid_code_columns)
+
+    return input_df
 
 '''
 References

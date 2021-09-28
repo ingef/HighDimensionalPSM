@@ -1,5 +1,5 @@
 from hdps.algorithm_steps import get_non_code_cols, step_identify_candidate_empirical_covariates, \
-    step_assess_recurrence, step_prioritize_select_covariates
+    step_assess_recurrence, step_prioritize_select_covariates, input_data_validation
 from typing import Union
 import pandas as pd
 
@@ -62,6 +62,9 @@ def HDPS_implementation(input_df: pd.DataFrame, n: int, k: int, outcome: str, tr
     """
     not_code_columns = get_non_code_cols(col_names=input_df.columns, dimension_prefixes=dimension_prefixes)
 
+    input_df = input_data_validation(input_df=input_df, treatment=treatment, outcome=outcome, not_code_columns=not_code_columns,
+                          threshold=threshold, outcome_cont=outcome_cont)
+
     selected_columns = step_identify_candidate_empirical_covariates(input_df=input_df,
                                                                     dimension_prefixes=dimension_prefixes, n=n, m=m)
 
@@ -70,7 +73,7 @@ def HDPS_implementation(input_df: pd.DataFrame, n: int, k: int, outcome: str, tr
     output_df, rank_df = step_prioritize_select_covariates(dim_covariates=dim_covariates, input_df=input_df,
                                                            treatment=treatment, outcome=outcome, k=k,
                                                            not_code_columns=not_code_columns, threshold=threshold,
-                                                           outcome_cont=outcome_cont )
+                                                           outcome_cont=outcome_cont)
 
 
     return output_df, rank_df
