@@ -126,7 +126,7 @@ def step_assess_recurrence(input_df: pd.DataFrame, selected_columns: list ):
         p_75 = np.percentile(df[df[cov] != 0], 75)
         # print(cov,p_75)
         df[cov + '_onetime'] = np.where(df[cov] > 0, 1, 0)
-        min_value = df[df[cov] != 0].min()
+        min_value = df[df[cov] != 0][cov].min()
         if median > min_value:  # >1 here because if median = 1 then both covariates cov_onetime and cov_median will be identical column (and result in Singular matrix)
             df[cov + '_median'] = np.where(df[cov] >= median, 1, 0)
         if (p_75 > min_value) and (
