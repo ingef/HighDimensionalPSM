@@ -172,9 +172,7 @@ def step_prioritize_select_covariates(dim_covariates: pd.DataFrame, input_df: pd
         # creating the contigency table between treatment and a particular covariate in the selected covariates
         cont_tab = pd.crosstab(dim_covariates_treat_outcome[covariate], dim_covariates_treat_outcome[treatment])
 
-        if cont_tab.shape != (2,2):
-            logging.error("Dimension of 'cont_tab' is not  (2,2). Problem with " + str(covariate))
-            raise Exception("Dimension of 'cont_tab' is not (2,2). Problem with " + str(covariate))
+
 
         # calculating PC0 and PC1
         P_c0 = cont_tab.loc[1, 0] / cont_tab[0].sum()  # for treatment 0
@@ -183,9 +181,7 @@ def step_prioritize_select_covariates(dim_covariates: pd.DataFrame, input_df: pd
         # Calculating RRcd
         cont_tab_co = pd.crosstab(dim_covariates_treat_outcome[covariate], dim_covariates_treat_outcome[outcome])
 
-        if cont_tab_co.shape != (2, 2):
-            logging.error("Dimension of 'cont_tab_co' is not  (2,2). Problem with " + str(covariate))
-            raise Exception("Dimension of 'cont_tab_co' is not  (2,2). Problem with " + str(covariate))
+
 
         RRcd = (cont_tab_co.loc[1, 1]/cont_tab_co.loc[1, :].sum()) / (cont_tab_co.loc[0, 1]/cont_tab_co.loc[0, :].sum())
 
