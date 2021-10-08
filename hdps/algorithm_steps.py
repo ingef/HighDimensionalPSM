@@ -40,12 +40,6 @@ def step_identify_candidate_empirical_covariates(input_df: pd.DataFrame, dimensi
     :return selected_columns: list - list of strings
         list of selected column names from input_df. for each dimension top n prevalent codes are selected.
 
-    References:
-    [1] Schneeweiss, Sebastian & Rassen, Jeremy & Glynn, Robert & Avorn, Jerry & Mogun, Helen & Brookhart, M. (2009). High-Dimensional Propensity Score Adjustment in Studies of Treatment Effects Using Health Care Claims Data. Epidemiology (Cambridge, Mass.). 20. 512-22. 10.1097/EDE.0b013e3181a663cc.
-    [2] Sam Lendle, "lendle/hdps: High-dimensional propensity score algorithm". link: https://rdrr.io/github/lendle/hdps/
-    [3] ohn Tazare & Ian Douglas & Elizabeth Williamson, 2019. "hdps: Implementation of high-dimensional propensity score approaches in Stata," London Stata Conference 2019 05, Stata Users Group. Link: https://www.stata.com/meeting/uk19/slides/uk19_tazare.pdf
-    [4] Schneeweiss S. Automated data-adaptive analytics for electronic healthcare data to study causal treatment effects. Clin Epidemiol. 2018;10:771-788. Published 2018 Jul 6. doi:10.2147/CLEP.S166545
-    [5] Wyss R, Fireman B, Rassen JA, Schneeweiss S. Erratum: High-dimensional Propensity Score Adjustment in Studies of Treatment Effects Using Health Care Claims Data. Epidemiology. 2018 Nov;29(6):e63-e64. doi: 10.1097/EDE.0000000000000886. Erratum for: Epidemiology. 2009 Jul;20(4):512-22. PMID: 29958191.
     '''
 
     col_names = input_df.columns
@@ -105,13 +99,7 @@ def step_assess_recurrence(input_df: pd.DataFrame, selected_columns: list ):
         with columns wih suffixes _ontime, _median, _75p. for each of selected_columns element, three columns with mentioned suffixes will be present.
         the columns with _ontime, _median, _75p are similar to _once, _sporadic, _frequent respectively in paper [1]
 
-        
-    References:
-    [1] Schneeweiss, Sebastian & Rassen, Jeremy & Glynn, Robert & Avorn, Jerry & Mogun, Helen & Brookhart, M. (2009). High-Dimensional Propensity Score Adjustment in Studies of Treatment Effects Using Health Care Claims Data. Epidemiology (Cambridge, Mass.). 20. 512-22. 10.1097/EDE.0b013e3181a663cc.
-    [2] Sam Lendle, "lendle/hdps: High-dimensional propensity score algorithm". link: https://rdrr.io/github/lendle/hdps/
-    [3] ohn Tazare & Ian Douglas & Elizabeth Williamson, 2019. "hdps: Implementation of high-dimensional propensity score approaches in Stata," London Stata Conference 2019 05, Stata Users Group. Link: https://www.stata.com/meeting/uk19/slides/uk19_tazare.pdf
-    [4] Schneeweiss S. Automated data-adaptive analytics for electronic healthcare data to study causal treatment effects. Clin Epidemiol. 2018;10:771-788. Published 2018 Jul 6. doi:10.2147/CLEP.S166545
-    [5] Wyss R, Fireman B, Rassen JA, Schneeweiss S. Erratum: High-dimensional Propensity Score Adjustment in Studies of Treatment Effects Using Health Care Claims Data. Epidemiology. 2018 Nov;29(6):e63-e64. doi: 10.1097/EDE.0000000000000886. Erratum for: Epidemiology. 2009 Jul;20(4):512-22. PMID: 29958191.
+
     '''
     dim_sel_covar_counts = input_df[selected_columns]
 
@@ -138,7 +126,7 @@ def step_assess_recurrence(input_df: pd.DataFrame, selected_columns: list ):
     return dim_covariates
 
 
-def step_prioritize_select_covariates(dim_covariates: pd.DataFrame, input_df: pd.DataFrame, treatment: str, outcome: str, k: int, not_code_columns: list, threshold: Union[str, float] = '75p', outcome_cont: bool =False):
+def step_prioritize_select_covariates(dim_covariates: pd.DataFrame, input_df: pd.DataFrame, treatment: str, outcome: str, k: int, not_code_columns: list):
     '''
 
     :param dim_covariates: pandas.DataFrame
@@ -152,31 +140,12 @@ def step_prioritize_select_covariates(dim_covariates: pd.DataFrame, input_df: pd
     :param treatment: str
         name of the column which have treatment(exposure) values. This column has to be a binary column
 
-    :param outcome_cont: bool
-        True if outcome is continous and False if outcome is binary. Default value: False
-        The HDPS implemention proposed in [1] is for binary outcome. in order to adapt the HDPS implemention for continous outcome too, below procedure is followed.
-
-        When outcome D is Binary as per [1].
-        RRcd = P(D =1 | C=1) / P(D=1|C = 0)
-
-        Adaptation when outcome D is continuous.
-        	Set threshold t which is 75th percentile value for the outcome column (but it could be set to median or any float or integer value if the user wishes to do so)
-        	Calculate RRcd = P(D>t|C=1) / P(D>t|C=0).
-        This is done by making a continuous outcome column to binary column, if value of outcome> t, then 1 else 0. After converting to binary, RRcd = P(D>t|C=1) / P(D>t|C=0) is equivalent to RRcd = P(D =1 | C=1) / P(D=1|C = 0)
 
     :param k: int
         number of final HDPS_covariates required. top k covariates are finally selected (considering all dimensions)
 
     :param not_code_columns: list - list of strings
         list of names of columns without dimension names as prefixes
-
-    :param threshold: Union[str, float]
-        applicable only if outcome_cont == True.
-        a cut-off threshold to make a continous outcome to binary outcome.
-        possible values for threshold are '75p', 'median', integer or float value given by the user.
-        if '75p', 75th percentile value of the outcome column is taken as cut-off threshold
-        if 'median', median value of the outcome column is taken as cut-off threshold
-        if integer or float value, the given value is taken as cut-off threshold
 
     :param outcome: str
         name of the column which have outcome values
@@ -190,32 +159,8 @@ def step_prioritize_select_covariates(dim_covariates: pd.DataFrame, input_df: pd
         column 'abs_log_BiasMult' has the abs(log(BiasMult)) values
         column 'rank' has values that denotes the importance of HDPS covariates. Lower the number (rank) higher the importance. higher importance for covariates which has higher abs(log(BiasMult)) value.
 
-    References:
-    [1] Schneeweiss, Sebastian & Rassen, Jeremy & Glynn, Robert & Avorn, Jerry & Mogun, Helen & Brookhart, M. (2009). High-Dimensional Propensity Score Adjustment in Studies of Treatment Effects Using Health Care Claims Data. Epidemiology (Cambridge, Mass.). 20. 512-22. 10.1097/EDE.0b013e3181a663cc.
-    [2] Sam Lendle, "lendle/hdps: High-dimensional propensity score algorithm". link: https://rdrr.io/github/lendle/hdps/
-    [3] ohn Tazare & Ian Douglas & Elizabeth Williamson, 2019. "hdps: Implementation of high-dimensional propensity score approaches in Stata," London Stata Conference 2019 05, Stata Users Group. Link: https://www.stata.com/meeting/uk19/slides/uk19_tazare.pdf
-    [4] Schneeweiss S. Automated data-adaptive analytics for electronic healthcare data to study causal treatment effects. Clin Epidemiol. 2018;10:771-788. Published 2018 Jul 6. doi:10.2147/CLEP.S166545
-    [5] Wyss R, Fireman B, Rassen JA, Schneeweiss S. Erratum: High-dimensional Propensity Score Adjustment in Studies of Treatment Effects Using Health Care Claims Data. Epidemiology. 2018 Nov;29(6):e63-e64. doi: 10.1097/EDE.0000000000000886. Erratum for: Epidemiology. 2009 Jul;20(4):512-22. PMID: 29958191.
+
     '''
-
-
-
-    if outcome_cont == True:
-       if threshold == '75p':
-           threshold_value = np.percentile(input_df[outcome],75)
-           logging.info('Threshold is 75 percentile: '+ str(threshold_value))
-       elif threshold == 'median':
-           threshold_value = np.median(input_df[outcome])
-           logging.info('Threshold is median: '+ str(threshold_value))
-       elif isinstance(threshold,(int,float)):
-           threshold_value = threshold
-           logging.info('Threshold is a value given: ' + str(threshold_value))
-       else:
-           logging.error("Invalid value given for 'threshold' parameter")
-           raise Exception("Invalid value given for 'threshold' parameter")
-       #converting continous outcome column to binary
-       input_df[outcome] = np.where(input_df[outcome] > threshold_value, 1, 0)
-
 
     # list of covariates' names (columns)
     covariates_list = dim_covariates.columns
@@ -280,8 +225,7 @@ def step_prioritize_select_covariates(dim_covariates: pd.DataFrame, input_df: pd
     return output_df, rank_df
 
 
-def input_data_validation(input_df: pd.DataFrame, treatment: str, outcome: str, not_code_columns: list,
-                          threshold: Union[str, float] = '75p', outcome_cont: bool = False):
+def input_data_validation(input_df: pd.DataFrame, treatment: str, outcome: str, not_code_columns: list):
     """
     performs validation of input_df columns. Removes invalid code columns.
 
@@ -295,101 +239,24 @@ def input_data_validation(input_df: pd.DataFrame, treatment: str, outcome: str, 
     :param outcome: str
         name of the column which have outcome values
 
-    :param threshold: Union[str, float]
-        applicable only if outcome_cont == True.
-        a cut-off threshold to make a continous outcome to binary outcome.
-        possible values for threshold are '75p', 'median', integer or float value given by the user.
-        if '75p', 75th percentile value of the outcome column is taken as cut-off threshold
-        if 'median', median value of the outcome column is taken as cut-off threshold
-        if integer or float value, the given value is taken as cut-off threshold
 
     :param not_code_columns: list - list of strings
         list of names of columns without dimension names as prefixes
-
-    :param outcome_cont: bool
-        True if outcome is continous and False if outcome is binary. Default value: False
-        The HDPS implemention proposed in [1] is for binary outcome. in order to adapt the HDPS implemention for continous outcome too, below procedure is followed.
-
-        When outcome D is Binary as per [1].
-        RRcd = P(D =1 | C=1) / P(D=1|C = 0)
-
-        Adaptation when outcome D is continuous.
-        	Set threshold t which is 75th percentile value for the outcome column (but it could be set to median or any float or integer value if the user wishes to do so)
-        	Calculate RRcd = P(D>t|C=1) / P(D>t|C=0).
-        This is done by making a continuous outcome column to binary column, if value of outcome> t, then 1 else 0. After converting to binary, RRcd = P(D>t|C=1) / P(D>t|C=0) is equivalent to RRcd = P(D =1 | C=1) / P(D=1|C = 0)
 
     :return: input_df: pandas.DataFrame
         Data frame with mandatory columns - 'PID', outcome, treatment, codes (like ICD, OPS) with corresponding dimension name as prefix - examples: 'DimensionName1_ICDcodeName1', 'DimensionName1_ICDcodeName2', 'DimensionName1_ICDcodeName1', 'DimensionName2_OPScodeName1', 'DimensionName2_OPScodeName1' and
         other optional columns of predefined and demographic columns. This is an updated input_df where invalid code columns are removed.
 
-    References:
-    [1] Schneeweiss, Sebastian & Rassen, Jeremy & Glynn, Robert & Avorn, Jerry & Mogun, Helen & Brookhart, M. (2009). High-Dimensional Propensity Score Adjustment in Studies of Treatment Effects Using Health Care Claims Data. Epidemiology (Cambridge, Mass.). 20. 512-22. 10.1097/EDE.0b013e3181a663cc.
-    [2] Sam Lendle, "lendle/hdps: High-dimensional propensity score algorithm". link: https://rdrr.io/github/lendle/hdps/
-    [3] ohn Tazare & Ian Douglas & Elizabeth Williamson, 2019. "hdps: Implementation of high-dimensional propensity score approaches in Stata," London Stata Conference 2019 05, Stata Users Group. Link: https://www.stata.com/meeting/uk19/slides/uk19_tazare.pdf
-    [4] Schneeweiss S. Automated data-adaptive analytics for electronic healthcare data to study causal treatment effects. Clin Epidemiol. 2018;10:771-788. Published 2018 Jul 6. doi:10.2147/CLEP.S166545
-    [5] Wyss R, Fireman B, Rassen JA, Schneeweiss S. Erratum: High-dimensional Propensity Score Adjustment in Studies of Treatment Effects Using Health Care Claims Data. Epidemiology. 2018 Nov;29(6):e63-e64. doi: 10.1097/EDE.0000000000000886. Erratum for: Epidemiology. 2009 Jul;20(4):512-22. PMID: 29958191.
+
     """
 
-    outcome_col = input_df[outcome]
-
-    treatment_col = input_df[treatment]
+    for column in [treatment, outcome]:
+        if set(input_df[column].unique()) != {0, 1}:
+            error_msg = f"Treatment column and outcome column (converted outcome column when outcome is continuous)  needs to be binary with both expressions, but {column} has entries {input_df[column].unique()}"
+            logging.error(error_msg)
+            raise Exception(error_msg)
 
     code_column_df = input_df.drop(columns=not_code_columns)
-
-    # code_column_names = code_column_df.columns
-    treat_unqiue_val = treatment_col.unique()
-
-    if treat_unqiue_val.shape[0] != 2:
-        logging.error(treatment + " column is invalid. Treatment column is expected to have both 0 and 1 values and "
-                                  "and also expected to not have other values except 0 and 1")
-        raise Exception(treatment + " column is invalid. Treatment column is expected to have both 0 and 1 values and "
-                                    "and also expected to not have other values except 0 and 1")
-    else:
-        treat_unqiue_val.sort()
-        if not (treat_unqiue_val[0] == 0 and treat_unqiue_val[1] == 1):
-            logging.error(
-                treatment + " column is invalid. Treatment column is expected to have both 0 and 1 values and "
-                            "and also expected to not have other values except 0 and 1")
-            raise Exception(
-                treatment + " column is invalid. Treatment column is expected to have both 0 and 1 values and "
-                            "and also expected to not have other values except 0 and 1")
-
-    if outcome_cont:
-        if threshold == '75p':
-            threshold_value = np.percentile(input_df[outcome], 75)
-        elif threshold == 'median':
-            threshold_value = np.median(input_df[outcome])
-        elif isinstance(threshold, (int, float)):
-            threshold_value = threshold
-        else:
-            raise Exception("Invalid value given for 'threshold' parameter")
-        # converting continous outcome column to binary
-        outcome_col = np.where(input_df[outcome] > threshold_value, 1, 0)
-    else:
-        outcome_col = input_df[outcome]
-
-    out_unqiue_val = outcome_col.unique()
-
-    if out_unqiue_val.shape[0] != 2:
-        logging.error(outcome + " column is invalid. Binary outcome column or converted binary column (if outcome is "
-                                "continuous) is expected to have both 0 and 1 values and also expected to not have "
-                                "other values except 0 and 1")
-        raise Exception(outcome + " column is invalid. Binary outcome column or converted binary column (if outcome is "
-                                  "continuous) is expected to have both 0 and 1 values and also expected to not have "
-                                  "other values except 0 and 1")
-
-    else:
-        out_unqiue_val.sort()
-        if not (out_unqiue_val[0] == 0 and out_unqiue_val[1] == 1):
-            logging.error(
-                outcome + " column is invalid. Binary outcome column or converted binary column (if outcome is "
-                          "continuous) is expected to have both 0 and 1 values and and also expected to not have "
-                          "other values except 0 and 1")
-            raise Exception(
-                outcome + " column is invalid. Binary outcome column or converted binary column (if outcome is "
-                          "continuous) is expected to have both 0 and 1 values and not and also expected to not have "
-                          "other values except 0 and 1")
-
     invalid_code_columns = []
 
     for col in code_column_df.columns:
@@ -401,12 +268,52 @@ def input_data_validation(input_df: pd.DataFrame, treatment: str, outcome: str, 
 
     if len(invalid_code_columns) > 0:
         logging.warning("Some code column(s) is/are invalid. The invalid code columns are ignored. The code column is "
-                        "expected to have at least one zero value and 1 non-zero value")
+                        "expected to have at least one zero value and one non-zero value")
         logging.warning("List of ignored invalid code columns: " + str(invalid_code_columns))
 
         input_df = input_df.drop(columns=invalid_code_columns)
 
     return input_df
+
+
+def process_outcome(input_df: pd.DataFrame, outcome: str, threshold: Union[str, float] = '75p'):
+    """
+    converts continuous outcome to binary outcome
+
+    :param input_df: pandas.DataFrame
+        Data frame with mandatory columns - 'PID', outcome, treatment, codes (like ICD, OPS) with corresponding dimension name as prefix - examples: 'DimensionName1_ICDcodeName1', 'DimensionName1_ICDcodeName2', 'DimensionName1_ICDcodeName1', 'DimensionName2_OPScodeName1', 'DimensionName2_OPScodeName1' and
+        other optional columns of predefined and demographic columns
+
+    :param outcome: str
+        name of the column which have outcome values
+
+    :param threshold: Union[str, float]
+        applicable only if outcome_cont == True.
+        a cut-off threshold to make a continous outcome to binary outcome.
+        possible values for threshold are '75p', 'median', integer or float value given by the user.
+        if '75p', 75th percentile value of the outcome column is taken as cut-off threshold
+        if 'median', median value of the outcome column is taken as cut-off threshold
+        if integer or float value, the given value is taken as cut-off threshold
+
+    :return: ndarray
+        converted outcome column in binary form
+    """
+
+    logging.info('Processing Outcome')
+    if threshold == '75p':
+        threshold_value = np.percentile(input_df[outcome], 75)
+        logging.info('Threshold is 75 percentile: ' + str(threshold_value))
+    elif threshold == 'median':
+        threshold_value = np.median(input_df[outcome])
+        logging.info('Threshold is median: ' + str(threshold_value))
+    elif isinstance(threshold, (int, float)):
+        threshold_value = threshold
+        logging.info('Threshold is a value given: ' + str(threshold_value))
+    else:
+        logging.error("Invalid value given for 'threshold' parameter")
+        raise Exception("Invalid value given for 'threshold' parameter")
+    # converting continous outcome column to binary
+    return np.where(input_df[outcome] > threshold_value, 1, 0)
 
 '''
 References
