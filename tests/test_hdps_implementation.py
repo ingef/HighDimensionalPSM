@@ -22,8 +22,8 @@ input_df = pd.DataFrame([
 
 
 def test_hdps_implementation():
-    df, rank_df = hdps_implementation(input_df, id_column, "outcome", "treatment", n_selected_per_dimension,
-                                      k_selected_total, dimension_prefixes)
+    df, rank_df = hdps_implementation(input_df, n_selected_per_dimension, k_selected_total, "outcome", "treatment",
+                                      dimension_prefixes)
 
     assert rank_df.loc[0]["Covariates Name"] == "ICD_3_75p"
     assert rank_df.loc[0]["Rank"] == 1
