@@ -97,7 +97,7 @@ def step_identify_candidate_empirical_covariates(input_df: pd.DataFrame, dimensi
     return selected_columns
 
 
-def step_assess_recurrence(input_df: pd.DataFrame, selected_columns: list ):
+def step_assess_recurrence(input_df: pd.DataFrame, selected_columns: list):
     """
     :param input_df: pandas.DataFrame
         Data frame with mandatory columns - 'PID', outcome, treatment, codes (like ICD, OPS) with corresponding
@@ -129,8 +129,8 @@ def step_assess_recurrence(input_df: pd.DataFrame, selected_columns: list ):
         df[cov + '_onetime'] = np.where(df[cov] > 0, 1, 0)
         min_value = df[df[cov] != 0][cov].min()
         if median > min_value:
-        	# > min_value here because if median = min_value then both covariates cov_onetime and cov_median
-        	# will be identical column (and result in Singular matrix)
+            # > min_value here because if median = min_value then both covariates cov_onetime and cov_median
+            # will be identical column (and result in Singular matrix)
             df[cov + '_median'] = np.where(df[cov] >= median, 1, 0)
         if (p_75 > min_value) and (median != p_75):
             # here > min_value for above reason, and != median, then cov_median and cov_75p
