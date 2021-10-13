@@ -1,5 +1,5 @@
 from hdps.algorithm_steps import get_non_code_cols, step_identify_candidate_empirical_covariates, \
-    step_assess_recurrence, step_prioritize_select_covariates
+    step_assess_recurrence, step_prioritize_select_covariates, input_data_validation, process_outcome
 from typing import Union
 import pandas as pd
 
@@ -53,14 +53,15 @@ def HDPS_implementation(input_df: pd.DataFrame, n: int, k: int, outcome: str, tr
         column 'abs_log_BiasMult' has the abs(log(BiasMult)) values
         column 'rank' has values that denotes the importance of HDPS covariates. Lower the number (rank) higher the importance. higher importance for covariates which has higher abs(log(BiasMult)) value.
 
-    References:
-    [1] Schneeweiss, Sebastian & Rassen, Jeremy & Glynn, Robert & Avorn, Jerry & Mogun, Helen & Brookhart, M. (2009). High-Dimensional Propensity Score Adjustment in Studies of Treatment Effects Using Health Care Claims Data. Epidemiology (Cambridge, Mass.). 20. 512-22. 10.1097/EDE.0b013e3181a663cc.
-    [2] Sam Lendle, "lendle/hdps: High-dimensional propensity score algorithm". link: https://rdrr.io/github/lendle/hdps/
-    [3] ohn Tazare & Ian Douglas & Elizabeth Williamson, 2019. "hdps: Implementation of high-dimensional propensity score approaches in Stata," London Stata Conference 2019 05, Stata Users Group. Link: https://www.stata.com/meeting/uk19/slides/uk19_tazare.pdf
-    [4] Schneeweiss S. Automated data-adaptive analytics for electronic healthcare data to study causal treatment effects. Clin Epidemiol. 2018;10:771-788. Published 2018 Jul 6. doi:10.2147/CLEP.S166545
-    [5] Wyss R, Fireman B, Rassen JA, Schneeweiss S. Erratum: High-dimensional Propensity Score Adjustment in Studies of Treatment Effects Using Health Care Claims Data. Epidemiology. 2018 Nov;29(6):e63-e64. doi: 10.1097/EDE.0000000000000886. Erratum for: Epidemiology. 2009 Jul;20(4):512-22. PMID: 29958191.
     """
-    not_code_columns = get_non_code_cols(col_names=input_df.columns, dimension_prefixes=dimension_prefixes)
+    not_code_columns = get_non_code_cols(col_names=list(input_df.columns), dimension_prefixes=dimension_prefixes)
+
+    if outcome_cont:
+        actual_outcome = input_df[outcome]
+        input_df[outcome] = process_outcome(input_df=input_df, outcome=outcome, threshold=threshold)
+
+
+    input_df = input_data_validation(input_df=input_df, treatment=treatment, outcome=outcome, not_code_columns=not_code_columns)
 
     selected_columns = step_identify_candidate_empirical_covariates(input_df=input_df,
                                                                     dimension_prefixes=dimension_prefixes, n=n, m=m)
@@ -69,8 +70,9 @@ def HDPS_implementation(input_df: pd.DataFrame, n: int, k: int, outcome: str, tr
 
     output_df, rank_df = step_prioritize_select_covariates(dim_covariates=dim_covariates, input_df=input_df,
                                                            treatment=treatment, outcome=outcome, k=k,
-                                                           not_code_columns=not_code_columns, threshold=threshold,
-                                                           outcome_cont=outcome_cont )
+                                                           not_code_columns=not_code_columns)
 
+    if outcome_cont:
+        output_df[outcome] = actual_outcome
 
     return output_df, rank_df
