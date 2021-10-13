@@ -21,7 +21,7 @@ input_df = pd.DataFrame([
     ], columns=col_names)
 non_code_cols = [id_column, "treatment", "outcome"]
 
-selected_columns = ["ICD_1", "ICD_2", "ICD_3", "ATC_1", "ATC_2", "ATC_4"]
+selected_columns = ['ATC_1', 'ATC_3', 'ATC_5', 'ICD_2', 'ICD_3', 'ICD_1']
 
 
 def test_get_non_code_cols():
@@ -40,16 +40,16 @@ def test_step_identify_candidate_empirical_covariates():
 
 def test_assess_recurrence():
     df = input_df[[id_column, "treatment", "outcome", *selected_columns]]
-    dim_cov = step_assess_recurrence(df, ["ICD_1", "ICD_2", "ICD_3", "ATC_1", "ATC_2", "ATC_4"])
+    dim_cov = step_assess_recurrence(df, selected_columns)
 
-    assert set(dim_cov.columns) == {'ICD_1_onetime', 'ICD_2_onetime', 'ICD_3_onetime',
-                               'ICD_3_median', 'ICD_3_75p', 'ATC_1_onetime', 'ATC_2_onetime', 'ATC_2_75p',
-                               'ATC_4_onetime'}
+    assert set(dim_cov.columns) == {'ATC_1_onetime', 'ATC_3_75p', 'ATC_3_median',
+                               'ATC_3_onetime', 'ATC_5_median', 'ATC_5_onetime', 'ICD_1_onetime', 'ICD_2_onetime',
+                               'ICD_3_75p', 'ICD_3_median', 'ICD_3_onetime'}
 
 
 def test_step_prioritize_select_covariates():
     df = input_df[[id_column, "treatment", "outcome", *selected_columns]]
-    dim_cov = step_assess_recurrence(df, ["ICD_1", "ICD_2", "ICD_3", "ATC_1", "ATC_2", "ATC_4"])
+    dim_cov = step_assess_recurrence(df, selected_columns)
     df, dim_cov = input_data_validation(
         input_df=df, dim_covariates=dim_cov, treatment="treatment", outcome="outcome", not_code_columns=non_code_cols)
     df, rank_df = step_prioritize_select_covariates(dim_covariates=dim_cov, input_df=df,
