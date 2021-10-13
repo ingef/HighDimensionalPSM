@@ -237,7 +237,8 @@ def step_prioritize_select_covariates(dim_covariates: pd.DataFrame, input_df: pd
     return output_df, rank_df
 
 
-def input_data_validation(input_df: pd.DataFrame, treatment: str, outcome: str, not_code_columns: list):
+def input_data_validation(input_df: pd.DataFrame, dim_covariates: pd.DataFrame, treatment: str, outcome: str,
+                          not_code_columns: list):
     """
     performs validation of input_df columns. Removes invalid code columns.
 
@@ -247,12 +248,14 @@ def input_data_validation(input_df: pd.DataFrame, treatment: str, outcome: str, 
         'DimensionName1_ICDcodeName1', 'DimensionName2_OPScodeName1', 'DimensionName2_OPScodeName1' and
         other optional columns of predefined and demographic columns
 
+    :param dim_covariates: pd.DataFrame
+        with columns wih suffixes _ontime, _median, _75p
+
     :param treatment: str
         name of the column which have treatment(exposure) values. This column has to be a binary column
 
     :param outcome: str
         name of the column which have outcome values
-
 
     :param not_code_columns: list - list of strings
         list of names of columns without dimension names as prefixes
@@ -273,11 +276,10 @@ def input_data_validation(input_df: pd.DataFrame, treatment: str, outcome: str, 
             logging.error(error_msg)
             raise Exception(error_msg)
 
-    code_column_df = input_df.drop(columns=not_code_columns)
     invalid_code_columns = []
 
-    for col in code_column_df.columns:
-        code_unique_value = code_column_df[col].unique()
+    for col in dim_covariates.columns:
+        code_unique_value = dim_covariates[col].unique()
 
         # check for zero entry presence and at least one non-zero entry presence
         if (code_unique_value.all()) or (not code_unique_value.any()):
@@ -288,9 +290,9 @@ def input_data_validation(input_df: pd.DataFrame, treatment: str, outcome: str, 
                         "expected to have at least one zero value and one non-zero value")
         logging.warning("List of ignored invalid code columns: " + str(invalid_code_columns))
 
-        input_df = input_df.drop(columns=invalid_code_columns)
+        dim_covariates = dim_covariates.drop(columns=invalid_code_columns)
 
-    return input_df
+    return input_df, dim_covariates
 
 
 def process_outcome(input_df: pd.DataFrame, outcome: str, threshold: Union[str, float] = '75p'):

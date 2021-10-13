@@ -76,8 +76,9 @@ def hdps_implementation(input_df: pd.DataFrame, n: int, k: int, outcome: str, tr
 
     dim_covariates = step_assess_recurrence(input_df=input_df, selected_columns=selected_columns)
 
-    input_df = input_data_validation(
-        input_df=input_df, treatment=treatment, outcome=outcome, not_code_columns=not_code_columns)
+    input_df, dim_covariates = input_data_validation(
+        input_df=input_df, dim_covariates=dim_covariates, treatment=treatment, outcome=outcome,
+        not_code_columns=not_code_columns)
 
     output_df, rank_df = step_prioritize_select_covariates(dim_covariates=dim_covariates, input_df=input_df,
                                                            treatment=treatment, outcome=outcome, k=k,
