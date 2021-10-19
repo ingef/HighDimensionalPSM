@@ -272,7 +272,7 @@ def input_data_validation(input_df: pd.DataFrame, treatment: str, outcome: str,
     code_column_df = input_df.drop(columns=not_code_columns)
     invalid_code_columns = []
 
-    for col in code_column_df.columns():
+    for col in code_column_df.columns:
         code_unique_value = input_df[col].unique()
 
         # check for zero entry presence and at least one non-zero entry presence
