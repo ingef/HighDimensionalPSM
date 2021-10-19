@@ -30,7 +30,9 @@ def test_get_non_code_cols():
 
 def test_step_identify_candidate_empirical_covariates():
 
-    sel_columns = step_identify_candidate_empirical_covariates(input_df=input_df,
+    df = input_data_validation(
+        input_df=input_df, treatment="treatment", outcome="outcome", not_code_columns=non_code_cols)
+    sel_columns = step_identify_candidate_empirical_covariates(input_df=df,
                                                                dimension_prefixes=dimension_prefixes,
                                                                n=n_selected_per_dimension,
                                                                m=m_min_code_occurrence)
@@ -50,8 +52,6 @@ def test_assess_recurrence():
 def test_step_prioritize_select_covariates():
     df = input_df[[id_column, "treatment", "outcome", *selected_columns]]
     dim_cov = step_assess_recurrence(df, selected_columns)
-    df, dim_cov = input_data_validation(
-        input_df=df, dim_covariates=dim_cov, treatment="treatment", outcome="outcome", not_code_columns=non_code_cols)
     df, rank_df = step_prioritize_select_covariates(dim_covariates=dim_cov, input_df=df,
                                                     treatment="treatment", outcome="outcome",
                                                     k=k_selected_total, not_code_columns=non_code_cols)
