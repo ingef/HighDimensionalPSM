@@ -2,6 +2,7 @@ import math
 import numpy as np
 import pandas as pd
 import logging
+from exceptions import DuplicateIdError, ColumnNotBinaryError, InvalidThresholdValue
 from typing import Union
 
 logger = logging.getLogger()
@@ -57,8 +58,7 @@ def step_identify_candidate_empirical_covariates(input_df: pd.DataFrame, dimensi
     if np.unique(input_df['PID']).shape[0] == input_df['PID'].shape[0]:
         logging.info('No duplicates in PID column')
     else:
-        logging.error('Duplicates in PID column')
-        raise Exception('Duplicates in PID column')
+        raise DuplicateIdError('Duplicates in PID column')
 
     # calculating total study population count
     total_sp_count = input_df.shape[0]
@@ -267,11 +267,7 @@ def input_data_validation(input_df: pd.DataFrame, treatment: str, outcome: str,
 
     for column in [treatment, outcome]:
         if set(input_df[column].unique()) != {0, 1}:
-            error_msg = f"Treatment column and outcome column (converted outcome column when outcome is continuous)" \
-                        f"needs to be binary with both expressions, but {column} has entries" \
-                        f"{input_df[column].unique()}"
-            logging.error(error_msg)
-            raise Exception(error_msg)
+            raise ColumnNotBinaryError(column_name=column, column_values=input_df[column].unique())
 
     code_column_df = input_df.drop(columns=not_code_columns)
     invalid_code_columns = []
@@ -329,7 +325,6 @@ def process_outcome(input_df: pd.DataFrame, outcome: str, threshold: Union[str, 
         threshold_value = threshold
         logging.info('Threshold is a value given: ' + str(threshold_value))
     else:
-        logging.error("Invalid value given for 'threshold' parameter")
-        raise Exception("Invalid value given for 'threshold' parameter")
+        raise InvalidThresholdValue(threshold_value=threshold)
     # converting continuous outcome column to binary
     return np.where(input_df[outcome] > threshold_value, 1, 0)
