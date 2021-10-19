@@ -2,7 +2,7 @@ import math
 import numpy as np
 import pandas as pd
 import logging
-from exceptions import DuplicateIdError, ColumnNotBinaryError, InvalidThresholdValue
+from hdps.exceptions import DuplicateIdError, ColumnNotBinaryError, InvalidThresholdValue
 from typing import Union
 
 logger = logging.getLogger()
