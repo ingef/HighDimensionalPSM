@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import logging
 from hdps.exceptions import DuplicateIdError, ColumnNotBinaryError, InvalidThresholdValueError, \
-    ColumnsNotBinaryDueToThresholdError
+    ConvertedOutcomeNotBinaryError
 from typing import Union
 
 
@@ -332,5 +332,5 @@ def process_outcome(input_df: pd.DataFrame, outcome: str, threshold: Union[str, 
     if len(set(np.unique(converted_outcome))) == 1:
         message = f"Threshold value {threshold_value} of threshold {threshold} is too small and causes all converted " \
                   f"outcome values to be {np.unique(converted_outcome)}"
-        raise ColumnsNotBinaryDueToThresholdError(message=message)
+        raise ConvertedOutcomeNotBinaryError(message=message)
 
