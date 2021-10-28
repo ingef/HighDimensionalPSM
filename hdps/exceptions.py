@@ -10,23 +10,19 @@ class HdpsError(Exception):
 
 class DuplicateIdError(HdpsError):
     def __init__(self, message: str):
-        self.message = message
-        super().__init__(self.message)
+        super().__init__(message)
 
 
 class ColumnNotBinaryError(HdpsError):
     def __init__(self, message: str):
-        self.message = message
-        super().__init__(self.message)
+        super().__init__(message)
 
 
 class InvalidThresholdValueError(HdpsError):
-    def __init__(self, message):
-        self.message = message
-        super().__init__(self.message)
+    def __init__(self, message: str):
+        super().__init__(message)
 
 
 class ColumnsNotBinaryDueToThresholdError(HdpsError):
-    def __init__(self, message):
-        self.message = message
-        super().__init__(self.message)
+    def __init__(self, message: str):
+        super().__init__(message)
