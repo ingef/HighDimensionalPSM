@@ -2,11 +2,9 @@ import math
 import numpy as np
 import pandas as pd
 import logging
-from hdps.exceptions import DuplicateIdError, ColumnNotBinaryError, InvalidThresholdValue
+from hdps.exceptions import DuplicateIdError, ColumnNotBinaryError, InvalidThresholdValueError, \
+    ColumnsNotBinaryDueToThresholdError
 from typing import Union
-
-logger = logging.getLogger()
-logger.setLevel('INFO')
 
 
 def get_non_code_cols(col_names: list, dimension_prefixes: list):
@@ -55,9 +53,7 @@ def step_identify_candidate_empirical_covariates(input_df: pd.DataFrame, dimensi
     col_names = input_df.columns
 
     # check for duplicates
-    if np.unique(input_df['PID']).shape[0] == input_df['PID'].shape[0]:
-        logging.info('No duplicates in PID column')
-    else:
+    if np.unique(input_df['PID']).shape[0] != input_df['PID'].shape[0]:
         raise DuplicateIdError('Duplicates in PID column')
 
     # calculating total study population count
@@ -267,7 +263,9 @@ def input_data_validation(input_df: pd.DataFrame, treatment: str, outcome: str,
 
     for column in [treatment, outcome]:
         if set(input_df[column].unique()) != {0, 1}:
-            raise ColumnNotBinaryError(column_name=column, column_values=input_df[column].unique())
+            message = f"Treatment column and outcome column must be binary and contain both 0 and 1. Column {column} " \
+                      f"contains {list(input_df[column].unique())}"
+            raise ColumnNotBinaryError(message=message)
 
     code_column_df = input_df.drop(columns=not_code_columns)
     invalid_code_columns = []
@@ -325,6 +323,14 @@ def process_outcome(input_df: pd.DataFrame, outcome: str, threshold: Union[str, 
         threshold_value = threshold
         logging.info('Threshold is a value given: ' + str(threshold_value))
     else:
-        raise InvalidThresholdValue(threshold_value=threshold)
+        message = f"Provided threshold value is invalid. Threshold must be 75p, median or int/float value. " \
+                  f"Provided value: {threshold}"
+        raise InvalidThresholdValueError(message=message)
+
     # converting continuous outcome column to binary
-    return np.where(input_df[outcome] > threshold_value, 1, 0)
+    converted_outcome = np.where(input_df[outcome] > threshold_value, 1, 0)
+    if len(set(np.unique(converted_outcome))) == 1:
+        message = f"Threshold value {threshold_value} of threshold {threshold} is too small and causes all converted " \
+                  f"outcome values to be {np.unique(converted_outcome)}"
+        raise ColumnsNotBinaryDueToThresholdError(message=message)
+
