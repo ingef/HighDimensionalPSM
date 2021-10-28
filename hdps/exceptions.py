@@ -23,6 +23,6 @@ class InvalidThresholdValueError(HdpsError):
         super().__init__(message)
 
 
-class ColumnsNotBinaryDueToThresholdError(HdpsError):
+class ConvertedOutcomeNotBinaryError(HdpsError):
     def __init__(self, message: str):
         super().__init__(message)
