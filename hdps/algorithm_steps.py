@@ -334,3 +334,4 @@ def process_outcome(input_df: pd.DataFrame, outcome: str, threshold: Union[str, 
                   f"outcome values to be {np.unique(converted_outcome)}"
         raise ConvertedOutcomeNotBinaryError(message=message)
 
+    return converted_outcome
