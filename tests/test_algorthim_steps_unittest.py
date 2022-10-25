@@ -431,7 +431,7 @@ class TestCalc(unittest.TestCase):
         expected_output_df8 = pd.DataFrame(data=expected_out_dict8)
         output_df8 = step_assess_recurrence(input_df=data_df8, selected_columns=selected_columns)
 
-        assert expected_output_df8.astype('int32').equals(output_df8)
+        assert expected_output_df8.astype('int32').equals(output_df8.astype('int32'))
 
     def test_step_prioritize_select_covariates(self):
         data_dict9 = {
