@@ -385,7 +385,7 @@ class TestCalc(unittest.TestCase):
         expected_output_df7 = pd.DataFrame(data=expected_out_dict7)
         output_df7 = step_assess_recurrence(input_df=data_df7, selected_columns=selected_columns)
 
-        assert expected_output_df7.astype('int32').equals(output_df7)
+        assert expected_output_df7.astype('int32').equals(output_df7.astype('int32'))
 
         data_dict8 = {
             "PID": ["ID01", "ID02", "ID03", "ID04", "ID05", "ID06", "ID07", "ID08",
