@@ -385,7 +385,7 @@ class TestCalc(unittest.TestCase):
         expected_output_df7 = pd.DataFrame(data=expected_out_dict7)
         output_df7 = step_assess_recurrence(input_df=data_df7, selected_columns=selected_columns)
 
-        assert expected_output_df7.astype('int32').equals(output_df7.astype('int32'))
+        assert expected_output_df7.equals(output_df7)
 
         data_dict8 = {
             "PID": ["ID01", "ID02", "ID03", "ID04", "ID05", "ID06", "ID07", "ID08",
@@ -431,7 +431,7 @@ class TestCalc(unittest.TestCase):
         expected_output_df8 = pd.DataFrame(data=expected_out_dict8)
         output_df8 = step_assess_recurrence(input_df=data_df8, selected_columns=selected_columns)
 
-        assert expected_output_df8.astype('int32').equals(output_df8.astype('int32'))
+        assert expected_output_df8.equals(output_df8)
 
     def test_step_prioritize_select_covariates(self):
         data_dict9 = {
